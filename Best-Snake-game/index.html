@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0a0f;
+      font-family: 'Courier New', monospace;
+      color: #e0e0e0;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 6px;
+      color: #00ff88;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      text-shadow: 0 0 20px #00ff8855;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 30px;
+      margin-bottom: 16px;
+      background: #111118;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 10px 24px;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: #444;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #00ff88;
+    }
+
+    #hi-score .stat-value {
+      color: #ffaa00;
+    }
+
+    #canvas-wrap {
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      border: 1px solid #1a1a2e;
+      border-radius: 4px;
+      image-rendering: pixelated;
+    }
+
+    #overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 10, 15, 0.92);
+      border-radius: 4px;
+    }
+
+    #overlay h2 {
+      font-size: 22px;
+      letter-spacing: 4px;
+      color: #00ff88;
+      margin-bottom: 8px;
+    }
+
+    #overlay p {
+      font-size: 12px;
+      color: #555;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+    }
+
+    .btn-start {
+      background: transparent;
+      border: 1px solid #00ff88;
+      color: #00ff88;
+      padding: 10px 32px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      letter-spacing: 3px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .btn-start:hover {
+      background: #00ff8822;
+      box-shadow: 0 0 12px #00ff8844;
+    }
+
+    .controls {
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .ctrl-label {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #444;
+    }
+
+    .speed-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .spd {
+      background: #111118;
+      border: 1px solid #222;
+      color: #555;
+      padding: 6px 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .spd.active {
+      border-color: #00ff88;
+      color: #00ff88;
+      background: #00ff8811;
+    }
+
+    .spd:hover:not(.active) {
+      border-color: #333;
+      color: #888;
+    }
+
+    .kbd-hint {
+      font-size: 10px;
+      color: #333;
+      letter-spacing: 1px;
+      margin-top: 10px;
+    }
+
+    .dead-msg {
+      color: #ff4466;
+      font-size: 13px;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+
+    .score-pop {
+      color: #ffaa00;
+      font-size: 11px;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    #pause-btn {
+      background: transparent;
+      border: 1px solid #333;
+      color: #444;
+      padding: 5px 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+      margin-left: 8px;
+    }
+
+    #pause-btn:hover {
+      border-color: #555;
+      color: #777;
+    }
+
+    #pause-btn.paused {
+      border-color: #ffaa00;
+      color: #ffaa00;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <h1>SNAKE</h1>
+    <div class="subtitle">PROFESSIONAL EDITION</div>
+    <div class="stats-bar">
+      <div class="stat" id="cur-score">
+        <div class="stat-label">SCORE</div>
+        <div class="stat-value" id="score-val">0</div>
+      </div>
+      <div class="stat" id="hi-score">
+        <div class="stat-label">BEST</div>
+        <div class="stat-value" id="hi-val">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">LENGTH</div>
+        <div class="stat-value" id="len-val">1</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">LEVEL</div>
+        <div class="stat-value" id="lvl-val">1</div>
+      </div>
+    </div>
+    <div id="canvas-wrap">
+      <canvas id="c" width="420" height="420"></canvas>
+      <div id="overlay">
+        <h2>SNAKE</h2>
+        <p>USE ARROW KEYS OR WASD</p>
+        <button class="btn-start" id="start-btn">▶ START GAME</button>
+      </div>
+    </div>
+    <div class="controls">
+      <span class="ctrl-label">SPEED</span>
+      <div class="speed-btns">
+        <button class="spd" data-spd="1">SLOW</button>
+        <button class="spd active" data-spd="2">MEDIUM</button>
+        <button class="spd" data-spd="3">FAST</button>
+        <button class="spd" data-spd="4">INSANE</button>
+      </div>
+      <button id="pause-btn">⏸ PAUSE</button>
+    </div>
+    <div class="kbd-hint">← ↑ → ↓ &nbsp;|&nbsp; WASD &nbsp;|&nbsp; P = PAUSE &nbsp;|&nbsp; R = RESTART</div>
+  </div>
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const COLS = 21, ROWS = 21, CELL = 20, PAD = 0;
+    const SPEEDS = { 1: 200, 2: 120, 3: 70, 4: 35 };
+    let snake, dir, nextDir, food, bonus, score, hiScore, gameRunning, paused, lvl, intervalId, selectedSpeed, bonusTimer;
+    hiScore = 0; selectedSpeed = 2;
+
+    function init() {
+      snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
+      dir = { x: 1, y: 0 };
+      nextDir = { x: 1, y: 0 };
+      food = spawnFood();
+      bonus = null;
+      bonusTimer = 0;
+      score = 0;
+      lvl = 1;
+      updateUI();
+    }
+
+    function spawnFood() {
+      let pos;
+      do { pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) }; }
+      while (snake.some(s => s.x === pos.x && s.y === pos.y));
+      return pos;
+    }
+
+    function spawnBonus() {
+      if (bonus) return;
+      let pos;
+      do { pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) }; }
+      while (snake.some(s => s.x === pos.x && s.y === pos.y) || (pos.x === food.x && pos.y === food.y));
+      bonus = pos;
+      bonusTimer = 60;
+    }
+
+    function updateUI() {
+      document.getElementById('score-val').textContent = score;
+      document.getElementById('hi-val').textContent = hiScore;
+      document.getElementById('len-val').textContent = snake.length;
+      document.getElementById('lvl-val').textContent = lvl;
+    }
+
+    function drawGrid() {
+      for (let x = 0; x <= COLS; x++) {
+        ctx.strokeStyle = '#0d0d15'; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(x * CELL, 0); ctx.lineTo(x * CELL, ROWS * CELL); ctx.stroke();
+      }
+      for (let y = 0; y <= ROWS; y++) {
+        ctx.beginPath(); ctx.moveTo(0, y * CELL); ctx.lineTo(COLS * CELL, y * CELL); ctx.stroke();
+      }
+    }
+
+    function drawSnake() {
+      snake.forEach((seg, i) => {
+        const isHead = i === 0;
+        const t = i / snake.length;
+        const g = isHead ? 255 : Math.floor(180 - t * 80);
+        const b = isHead ? 136 : Math.floor(60 - t * 40);
+        ctx.fillStyle = isHead ? '#00ff88' : `rgb(0, ${g}, ${b})`;
+        const inset = isHead ? 1 : 2;
+        ctx.beginPath();
+        roundRect(ctx, seg.x * CELL + inset, seg.y * CELL + inset, CELL - inset * 2, CELL - inset * 2, isHead ? 5 : 3);
+        ctx.fill();
+        if (isHead) {
+          ctx.fillStyle = '#0a0a0f';
+          const eyeOff = CELL * 0.25;
+          const ex = seg.x * CELL + CELL / 2 + dir.x * eyeOff;
+          const ey = seg.y * CELL + CELL / 2 + dir.y * eyeOff;
+          const perp = { x: -dir.y, y: dir.x };
+          ctx.beginPath(); ctx.arc(ex + perp.x * 3, ey + perp.y * 3, 2, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(ex - perp.x * 3, ey - perp.y * 3, 2, 0, Math.PI * 2); ctx.fill();
+        }
+        if (i > 0 && i < snake.length - 1) {
+          ctx.fillStyle = `rgba(0,${g},${b},0.3)`;
+          ctx.beginPath();
+          ctx.arc(seg.x * CELL + CELL / 2, seg.y * CELL + CELL / 2, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    }
+
+    function drawFood() {
+      const x = food.x * CELL + CELL / 2, y = food.y * CELL + CELL / 2;
+      ctx.fillStyle = '#ff4466';
+      ctx.shadowColor = '#ff4466'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(x, y, CELL * 0.35, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#ff88aa';
+      ctx.beginPath(); ctx.arc(x - 2, y - 2, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#22aa44';
+      ctx.beginPath(); ctx.moveTo(x + 1, y - CELL * 0.35); ctx.quadraticCurveTo(x + 6, y - CELL * 0.5, x + 4, y - CELL * 0.2); ctx.fill();
+    }
+
+    function drawBonus() {
+      if (!bonus) return;
+      const x = bonus.x * CELL + CELL / 2, y = bonus.y * CELL + CELL / 2;
+      const pulse = 0.85 + 0.15 * Math.sin(Date.now() / 120);
+      ctx.fillStyle = '#ffaa00';
+      ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 14 * pulse;
+      ctx.save(); ctx.translate(x, y); ctx.scale(pulse, pulse);
+      const r = CELL * 0.4;
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const a = (i * 4 * Math.PI / 5) - Math.PI / 2;
+        const b2 = a + 2 * Math.PI / 10;
+        if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+        else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        ctx.lineTo(Math.cos(b2) * r * 0.45, Math.sin(b2) * r * 0.45);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#ffcc44';
+      ctx.font = `bold 8px Courier New`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText(Math.ceil(bonusTimer / 10), x, bonus.y * CELL);
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+    }
+
+    function draw() {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawGrid();
+      drawFood();
+      drawBonus();
+      drawSnake();
+    }
+
+    function step() {
+      if (!gameRunning || paused) return;
+      dir = { ...nextDir };
+      const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+      if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) { gameOver(); return; }
+      if (snake.some(s => s.x === head.x && s.y === head.y)) { gameOver(); return; }
+      snake.unshift(head);
+      let ate = false;
+      if (head.x === food.x && head.y === food.y) {
+        score += 10 * lvl; ate = true; food = spawnFood();
+        if (snake.length % 5 === 0) { lvl++; restartInterval(); }
+        if (Math.random() < 0.3) spawnBonus();
+      } else if (bonus && head.x === bonus.x && head.y === bonus.y) {
+        score += 30 * lvl; ate = true; bonus = null; bonusTimer = 0;
+      }
+      if (!ate) snake.pop();
+      if (bonus) { bonusTimer--; if (bonusTimer <= 0) bonus = null; }
+      if (score > hiScore) hiScore = score;
+      updateUI();
+      draw();
+    }
+
+    function gameOver() {
+      gameRunning = false;
+      clearInterval(intervalId);
+      draw();
+      const overlay = document.getElementById('overlay');
+      overlay.innerHTML = `
+    <div class="dead-msg">☠ GAME OVER</div>
+    <div class="score-pop">SCORE: ${score} &nbsp;|&nbsp; LENGTH: ${snake.length}</div>
+    ${score >= hiScore && score > 0 ? '<div style="color:#ffaa00;font-size:11px;margin-bottom:10px;letter-spacing:2px">★ NEW BEST!</div>' : ''}
+    <button class="btn-start" id="start-btn">↺ PLAY AGAIN</button>`;
+      overlay.style.display = 'flex';
+      document.getElementById('start-btn').onclick = startGame;
+    }
+
+    function restartInterval() {
+      clearInterval(intervalId);
+      const base = SPEEDS[selectedSpeed];
+      const adjusted = Math.max(base - (lvl - 1) * 5, base * 0.5);
+      intervalId = setInterval(step, adjusted);
+    }
+
+    function startGame() {
+      document.getElementById('overlay').style.display = 'none';
+      init();
+      gameRunning = true;
+      paused = false;
+      restartInterval();
+      draw();
+    }
+
+    document.addEventListener('keydown', e => {
+      const map = {
+        ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 },
+        ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 },
+        w: { x: 0, y: -1 }, s: { x: 0, y: 1 },
+        a: { x: -1, y: 0 }, d: { x: 1, y: 0 }
+      };
+      if (map[e.key]) {
+        const nd = map[e.key];
+        if (nd.x !== -dir.x || nd.y !== -dir.y) nextDir = nd;
+        e.preventDefault();
+      }
+      if (e.key === 'p' || e.key === 'P') togglePause();
+      if (e.key === 'r' || e.key === 'R') { if (gameRunning) { clearInterval(intervalId); gameOver(); } }
+    });
+
+    document.querySelectorAll('.spd').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.spd').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedSpeed = parseInt(btn.dataset.spd);
+        if (gameRunning) restartInterval();
+      };
+    });
+
+    function togglePause() {
+      if (!gameRunning) return;
+      paused = !paused;
+      const pb = document.getElementById('pause-btn');
+      pb.textContent = paused ? '▶ RESUME' : '⏸ PAUSE';
+      pb.classList.toggle('paused', paused);
+      if (!paused) draw();
+    }
+
+    document.getElementById('pause-btn').onclick = togglePause;
+    document.getElementById('start-btn').onclick = startGame;
+
+    draw();
+  </script>
+</body>
+
+</html>
